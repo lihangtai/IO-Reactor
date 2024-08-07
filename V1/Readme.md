@@ -1,6 +1,6 @@
 
 
-**V1版本是socket编程的MVP(minimum viable product最小可行产品)代码示例，需要先拥有以下基础概念**：
+**V1版本是响应多线程服务的socket编程的MVP(minimum viable product最小可行产品)代码示例，需要先拥有以下基础概念**：
 
 1. 网络请求/响应服务是以client-server交互模式来编程的
 2. 对linux系统调用，socket编程的基本理解
@@ -12,3 +12,5 @@
 > keyword: TCP流式与UDP报式，IP地址划分，网络端口，linux常用网络命令：ifconfig，ss
 4. 文件描述符fd
 > 什么是文件描述符，与进程和线程对应的关系是什么，fd的生命周期，fd的继承（父子进程），fd的共享（多线程）
+5. 线程和进程的区别
+> 创建线程后使用detach的原因
