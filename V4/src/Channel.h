@@ -1,6 +1,6 @@
 /*
  一个Channel 封装了一个多路复用的IO 文件描述符，并添加了各种动作与属性 （完成封装）
- 
+ 设置了这个channel面对读/写/关闭时候需要调用的回调函数
 */
 #pragma once
 #include <functional>
