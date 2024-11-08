@@ -9,9 +9,10 @@ class EventLoop;
 
 
 /*
-因为epoll需要处理fd，所以抽象了这个类，提供用于epoll的每个fd的操作函数，以及当事件到达的时候，会调用的回调函数（读，写，结束）
+因为epoll需要处理fd，所以抽象了这个类，提供用于epoll的每个fd的操作函数，以及当事件到达的时候会触发调用的回调函数（读，写，结束）
 同时在这个类中还设定了一个布尔量
 */
+
 class Channel{
 
 public:
@@ -71,11 +72,15 @@ private:
 
     int fd_;
     int events_;
+    // IO事件有很多，event该文件描述符关心绑定的IO事件
     int revents_;
+    // epoll_wait 返回的当前fd发生的事件 （有可能按预期来，有可能报错）
     bool isInEpoll_;
 
 
-//用来判定当前channel是否与其他某个对象进行了绑定，谁拥有了当前的channel，使用weak指针来接收是担心循环引用导致的问题
+//用来判定当前channel是否与其他某个对象进行了绑定，谁拥有了当前的channel，使用weak指针来接收可以避免循环引用导致的问题
+//绑定但不增加对象的引用计数
+
     std::weak_ptr<void> tie_;
     bool tied_;
 

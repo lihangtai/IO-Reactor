@@ -1,4 +1,9 @@
 #pragma once 
+#include "InetAddr.h"
+#include <fcntl.h>
+#include <unistd.h>
+
+#include <sys/socket.h>
 
 class InetAddr;
 
@@ -6,7 +11,7 @@ class Socket{
 
     private:
         int sockfd_;
-    
+
     public:
         Socket();
         Socket(int fd);
@@ -16,4 +21,5 @@ class Socket{
         void listen();
         void setNonblock();
         int fd(){return sockfd_;}
-} ;  
+};
+

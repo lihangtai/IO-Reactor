@@ -21,7 +21,17 @@ solution: reactor + threadpool，充分利用多核cpu -》线程池
 
 最基础的类：  Socket,InetAddr，EPOLL
 
-以文件描述符为索引： Epoll（注册fd） ->  Channel (设置在epoll注册的fd的属性，设置读写关闭的回调函数，与另一个**对象绑定) ->  EventLoop
+以文件描述符为索引： 
+Epoll（注册fd） 提供方法操作 ->  
+Channel (设置在epoll注册的fd的属性，设置读写关闭的回调函数，与另一个**对象绑定) 提供使用->  
+Connection(设置一个连接（channel/fd）读写关闭的回调函数，设置fd的属性，绑定channel) 实现中包含读写的用户态缓冲区，，每个连接会对应不同的读写/关闭/错误的实现逻辑    设置Channel的回调函数，同时也为上层的创建提供接收回调函数的接口
+
+
+
+运行状态机:
+EventLoop (拥有所有活跃的Channel的容器，实例化Epoll，主要执行loop函数逻辑阻塞10微秒) loop使用Epoll.wait 循环调用收到Channel list中相应的回调函数
+
+
 
 
 
@@ -40,3 +50,5 @@ solution: reactor + threadpool，充分利用多核cpu -》线程池
 
 2. 回调函数如何写最好
 >std::function 接收   std::move 传递参数给function
+
+3. 多源程序和头文件防止重复包含

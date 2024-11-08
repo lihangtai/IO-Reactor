@@ -52,6 +52,8 @@ class Connection: public std::enable_shared_from_this<Connection>{
         Buffer* outputBuffer(){ return &outputBuffer_;}
 
         int fd()const{return socket_->fd();}
+        
+        void Connection::shutdown();
 
     private:
         void handleRead();

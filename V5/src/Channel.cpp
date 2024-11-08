@@ -15,7 +15,7 @@ void Channel::setEvents(int events){
     events_ = events;
 }
 
-int Channel::Event()const{
+int Channel::Event() const{
     return events_;
 }
 
@@ -24,7 +24,7 @@ void Channel::setRevents(int revents)
 	revents_ = revents;
 }
 
-int Channel::Revent()const{
+int Channel::Revent() const {
     return revents_;
 }
 
@@ -32,7 +32,7 @@ bool Channel::isInEpoll(){
     return isInEpoll_ == true;
 }
 
-void Channel::setInEpoll(bool in){
+void Channel::setInEpoll(bool in) {
     isInEpoll_ = in;
 }
 
@@ -41,7 +41,7 @@ int Channel::Fd() const{
 }
 
 void Channel::handleEvent(){
-    if(tied_){
+    
         
         if(tied_){
             auto guard = tie_.lock();
@@ -56,7 +56,7 @@ void Channel::handleEvent(){
             //用于建立连接，第一次连接的时候tied才为true
         }
     }
-}
+
 
 void Channel::tie(const std::shared_ptr<void>& obj){
 
