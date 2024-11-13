@@ -22,5 +22,21 @@ Acceptor::Acceptor(const InetAddr& listenaddr, EventLoop* eventloop)
     void Acceptor::handleRead(){
         InetAddr peerAddr;
         int connfd = acceptSocket_.accept(&peerAddr);
+
+        if(connfd >= 0){
+            if(newconnectioncallback_){
+                newconnectioncallback_(connfd, peerAddr);
+            }
+        }
+        else{
+            printf("accept error/n");
+        }
         
+    }
+
+    void Acceptor::listen(){
+
+        acceptSocket_.listen();
+        acceptChannel_.enableReading();
+        listen_ = listen;
     }

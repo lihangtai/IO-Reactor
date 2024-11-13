@@ -51,6 +51,7 @@
         "thread": "cpp",
         "future": "cpp",
         "socket": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "ratio": "cpp"
     }
 }

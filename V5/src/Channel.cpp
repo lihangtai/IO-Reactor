@@ -88,3 +88,9 @@ void Channel::handleEventWithGuard(){
         }
     }
 }
+
+    
+
+void Channel::update(){
+    loop_->updateChannel(this);
+}

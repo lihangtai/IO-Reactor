@@ -6,7 +6,7 @@
 Server::Server(const InetAddr& listenAddr, EventLoop* eventloop)
     :loop_(eventloop)
     , ipPort_(listenAddr.toIpPort())
-    ,acceptor_(std::make_unique<Acceptor>(listenAddr, loop_))
+    , acceptor_(std::make_unique<Acceptor>(listenAddr, loop_))
     {
     auto cb = [this](int sockfd, const InetAddr& peerAddr){newConnection(sockfd, peerAddr);};
     acceptor_->setNewconnectionCallback(cb);

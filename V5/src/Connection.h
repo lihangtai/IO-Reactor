@@ -6,7 +6,9 @@
 #include"InetAddr.h"
 class EventLoop;
 class Channel;
-
+//
+//接收fd， 发：能直接发给fd则直接发送，否则存放到Connection的buffer中
+//        收：
 
 class Connection:public std::enable_shared_from_this<Connection>
 {
@@ -14,7 +16,7 @@ public:
 	enum class StateE { kDisconnected, kConnecting, kConnected, kDisconnecting };
 public:
 	//Connection(EventLoop* loop,int sockfd);
-	Connection(EventLoop* loop, int sockfd,const InetAddr& loaclAddr,const InetAddr& peerAddr);
+	Connection(EventLoop* loop, int sockfd,const InetAddr& localAddr,const InetAddr& peerAddr);
 
 	void setMessageCallback(const MessageCallback& cb)
 	{
