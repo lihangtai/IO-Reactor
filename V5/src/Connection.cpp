@@ -54,7 +54,7 @@ void Connection::send(const void* message, size_t len)
 	if (!channel_->isWrite() && outputBuffer_.readableBytes() == 0) {
 		nwrote = ::write(fd(), message, len);
 		if (nwrote >= 0) {
-			reamining =len - nwrote;
+			reamining = len - nwrote;
 			if (reamining == 0) {
 				//表示数据已完全发送出去，通知用户写已完成
 				if (writeCompleteCallback_) {

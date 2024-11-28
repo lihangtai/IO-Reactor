@@ -52,6 +52,7 @@
         "future": "cpp",
         "socket": "cpp",
         "fstream": "cpp",
-        "ratio": "cpp"
+        "ratio": "cpp",
+        "condition_variable": "cpp"
     }
 }

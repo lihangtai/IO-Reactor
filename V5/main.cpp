@@ -105,7 +105,12 @@ int main(int argc, char* argv[]){
      1. 创建Acceptor类对象：创建socket连接（以及fd对应的Channel），bind（监听指定的listenAddr（10000+any）），设置Channel的读回调函数为accept系统调用
      2. 设置Acceptor对象建立新连接connection回调函数（fd置为非阻塞，创建新的connection对象，设置对象Channel的收到/写/开启/关闭连接的回调函数）
      3. 创建ThreadPool类对象：start函数循环中创建线程存储到线程池容器(threads_)中，它们同时执行runInThread函数，在循环中通过抢占锁和满足条件变量来获取任务队列Task中的任务，并执行     （move函数把需要运行的函数传入 std::function<void()>中
-      
+
+
+     其中需要注意的设计是：每次去调用connection类的send函数发送数据时，send会去调用write(fd),如果有部分内容没有发完则把这部分存到output buffer中
+     但只看这个函数实现的时候可能会有疑问，什么时候会将buffer中的数据发出呢？
+     在connection对象中的channel成员对象中注册对于这个fd的当epoll监听到EPOLLOUT事件的时候，去调度的回调函数处理逻辑
+     其实就是把buffer中的数据再次write
     */
     server.start();
 
@@ -121,6 +126,7 @@ int main(int argc, char* argv[]){
     loop.loop();
     /*
     循环进行调用epoll_wait，对捕捉到的Channel，调用它对应回调函数进行处理 
+    而在V5中每个Channel的中EPOLLIN回调函数触发的时候，会把任务假如到线程池中负责执行
     */
 
     return 0;
