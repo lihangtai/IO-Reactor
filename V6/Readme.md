@@ -9,6 +9,7 @@
 
 > 可以使用互斥锁或者eventfd等机制
 eventfd:用于跨线程间的轻量化同步通信 （内核管理的一个uint64整数）
+把这个fd（channel加入到epoll中），如果有任务需要执行，调用函数想eventfd中写入值，触发epoll执行
 
 
 ``` 
@@ -38,4 +39,9 @@ void EventLoop::loop()
 > 单Reactor模型：即要管理新的连接，也要管理对已经建立连接的对端进行读写操作，如果IO压力比较大可能会处理不及时。
 
 升级为：主从Reactor + threadpool模型
-主Readctor负责与客户端建立连接，其他的Reactor负责与客户端IO通信,threadpool负责进行计算任务
+主Readctor负责与客户端建立连接（acceptor）然后把连接connection分配给其他Reaction（其实就是构造connection的时候指定别的eventLoop），其他的Reactor负责与客户端IO通信,threadpool负责进行计算任务
+
+
+
+
+> 流程粗略总结：整个程序先创建一个socket，开始监听端口，传建并把这个Channel加入到epoll的监听中，只要收到EPOLLIN的事件就调用创建一个新的连接，再把新的连接加入到epoll的监听中。但目前的模型是主从Readctor+运算线程池，所以实际运行还涉及到负载均衡（主reactor把连接分配给不同的reactor，不同的reactor将会调用线程池进行运算，最终的IO操作还都会交给reactor进行处理，放置对fd的非法操作）创建好reactor线程池，并把epoll_wait的返回值分发给不同的reactor进行处理，指定不同的eventloop，计算复杂任务可以在收到/发送回到函数中指定调用）

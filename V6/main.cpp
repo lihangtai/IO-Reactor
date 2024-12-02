@@ -7,12 +7,11 @@
 #include "src/ThreadPool.h"
 using namespace std;
 
-
 int main(){
 
     InetAddr servAddr(10000);
-    EventLool loop;
-    Server server(servAddr, &loop);
+    EventLoop loop;
+    Server server(servAddr, &loop); //包含一个Acceptor（base EventLoop) 和 Reactor线程池和 运算线程池
     server.setConnectionCallback([](const ConnectionPtr& conn){
         if(conn->connected()){
             printf("Connection connected ip:port: %s connected../n", conn->peerAddress().toIpPort().c_str());
@@ -28,7 +27,7 @@ int main(){
         conn->send(msg);
     });
 
-    server.start(2);
+    server.start(2); //开启多个reactor线程池 + 计算线程池 （但涉及文件描述符的IO操作依然由reactor负责处理，避免产生冲突）
     loop.loop();
 
     return 0;

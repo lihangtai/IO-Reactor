@@ -30,6 +30,7 @@ class Channel
         void setCloseCallback(EventsCallback cb){closeCallback_ = std::move(cb);}
 
         void setCloseCallback(EventsCallback cb){closeCallback_ = std::move(cb);}
+        void setErrorCallback(EventsCallback cb){errorCallback_ = std::move(cb);}
 
         void enableReading(){events_ |= (EPOLLIN | EPOLLPRI); update(); }
         void enableWriting(){events_ |= EPOLLOUT ; update();}
