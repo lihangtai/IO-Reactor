@@ -40,10 +40,10 @@ class Channel
 
         void disableAll(){events_ = 0; update();}
 
-        bool isNoneEvent()const{ return events_ == 0; }
-        bool isWrite()const {return events_ & EPOLLOUT;}
+        bool isNoneEvent() const{ return events_ == 0; }
+        bool isWrite() const {return events_ & EPOLLOUT;}
 
-        bool isRead()const {return events_ &(EPOLLIN | EPOLLPRI);}
+        bool isRead() const {return events_ &(EPOLLIN | EPOLLPRI);}
 
         void handleEvent();
 

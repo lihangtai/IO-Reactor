@@ -1,6 +1,7 @@
 #include"Channel.h"
 #include"EventLoop.h"
-
+#include"../src/log/logger.h"
+#include <sstream>
 
 Channel::Channel(EventLoop* loop, int fd)
 	:loop_(loop)
@@ -8,7 +9,7 @@ Channel::Channel(EventLoop* loop, int fd)
 	, events_(0)
 	, revents_(0)
 	, isInEpoll_(false)
-	, tied_(false)
+	,tied_(false)
 {
 }
 
@@ -53,7 +54,7 @@ void Channel::handleEvent()
 			handleEventWithGuard();
 		}
 	}
-	else {	
+	else {//���else�����������������ӵģ���Ϊ��ʼ�������ӵ�ʱ��tied_��false,�����ӽ�����ʼͨ��tied_��Ϊtrue
 		handleEventWithGuard();
 	}
 }
@@ -76,9 +77,13 @@ void Channel::tie(const std::shared_ptr<void>& obj)
 
 void Channel::handleEventWithGuard()
 {
-	if ((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN)) {//���¼�Ϊ����û�пɶ��¼�ʱ
+	//LOG_TRACE << reventsToString();
+	LOG_INFO << reventsToString();
+
+	//���¼�Ϊ����û�пɶ��¼�ʱ
+	if ((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN)) {
 		if (closeCallback_) {
-			printf("channel closeCallback\n");
+			LOG_DEBUG << "channel closeCallback";
 			closeCallback_();
 		}
 	}
@@ -94,4 +99,38 @@ void Channel::handleEventWithGuard()
 		if (writeCallback_)
 			writeCallback_();
 	}
+}
+
+
+
+
+
+std::string Channel::reventsToString() const
+{
+	return eventsToString(fd_, revents_);
+}
+
+std::string Channel::eventsToString() const
+{
+	return eventsToString(fd_, events_);
+}
+
+std::string Channel::eventsToString(int fd, int ev)
+{
+	std::ostringstream oss;
+	oss << fd << ": ";
+	if (ev & EPOLLIN)
+		oss << "IN ";
+	if (ev & EPOLLPRI)
+		oss << "PRI ";
+	if (ev & EPOLLOUT)
+		oss << "OUT ";
+	if (ev & EPOLLHUP)
+		oss << "HUP ";
+	if (ev & EPOLLRDHUP)
+		oss << "RDHUP ";
+	if (ev & EPOLLERR)
+		oss << "ERR ";
+
+	return oss.str();
 }
