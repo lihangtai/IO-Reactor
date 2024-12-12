@@ -1,35 +1,30 @@
 #pragma once
-
 #include<functional>
 #include"InetAddr.h"
 
 #include"Socket.h"
 #include"Channel.h"
 
+class EventLoop;
 
 class Acceptor
 {
+public:
+	using NewConnectionCallback = std::function<void(int sockfd,const InetAddr&)>;
+public:
+	Acceptor(const InetAddr& listenAddr, EventLoop* eventloop);
+	~Acceptor();
 
-pubic:
-    using NewConnectionCallback = std::function<void(int sockfd, const InetAddr&)>;
+	void setNewconnectionCallback(const NewConnectionCallback& cb) { newConnectionCallback_ = cb; }
 
-    Acceptor(const InetAddr& listenAddr, EventLoop* eventloop);
-    ~Acceptor();
-
-    void listen();
-
-    void setNewconnectionCallback(const NewConnectionCallback& cb)
-    {
-        newConnectionCallback = cb;
-    }
-
+	void listen();
 private:
+	void handleRead();
 
-    void handleRead();
+	EventLoop* loop_;
+	Socket acceptSocket_;
+	Channel acceptChannel_;
 
-    Socket acceptSocket_
-    EventLoop* loop_;
-    Channel acceptChannel_;
-    NewConnectionCallback newConnectionCallback;
-    bool listen_;
-}
+	NewConnectionCallback newConnectionCallback_;
+	bool listen_;
+};

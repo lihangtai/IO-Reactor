@@ -15,7 +15,7 @@ Connection::Connection(EventLoop* loop, int sockfd, const InetAddr& loaclAddr, c
 	,localAddr_(loaclAddr)
 	,peerAddr_(peerAddr)
 {
-	//ï¿½ï¿½ï¿½Ãºï¿½ ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½Ø±ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ä»Øµï¿½ï¿½ï¿½ï¿½ï¿½
+	//ÉèÖÃºÃ ¶Á£¬Ð´£¬¹Ø±ÕÁ¬½Ó,´íÎó´¦Àí µÄ»Øµ÷º¯Êý
 	channel_->SetReadCallback([this]() {handleRead(); });
 	channel_->setWriteCallback([this]() {handleWrite(); });
 	channel_->setCloseCallback([this]() {handleClose(); });
@@ -51,16 +51,16 @@ void Connection::shutdown()
 {
 	if (state_ == StateE::kConnected) {
 		setState(StateE::kDisconnecting);
-		//ï¿½ï¿½Ç°ï¿½ï¿½Ö±ï¿½Óµï¿½ï¿½ÃµÄ£ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½runInLoop()ï¿½ï¿½ï¿½ï¿½È¥ï¿½ï¿½ï¿½ï¿½
+		//ÒÔÇ°ÊÇÖ±½Óµ÷ÓÃµÄ£¬ÏÖÔÚÊ¹ÓÃrunInLoop()º¯ÊýÈ¥µ÷ÓÃ
 		loop_->runInLoop([this]() { shutdownInLoop(); });
 	}
 }
 void Connection::shutdownInLoop()
 {
-	if (!channel_->isWrite())  // Ëµï¿½ï¿½ï¿½ï¿½Ç°outputBufferï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	if (!channel_->isWrite())  // ËµÃ÷µ±Ç°outputBufferÖÐµÄÊý¾ÝÒÑ¾­È«²¿·¢ËÍÍê³É
 	{
 		
-		sockets::shutdownWrite(fd());   // ï¿½Ø±ï¿½Ð´ï¿½ï¿½ ,ï¿½Ü´ï¿½ï¿½ï¿½EPOLLHUP,Ò²ï¿½á´¥ï¿½ï¿½EPOLLIN
+		sockets::shutdownWrite(fd());   // ¹Ø±ÕÐ´¶Ë ,ÄÜ´¥·¢EPOLLHUP,Ò²»á´¥·¢EPOLLIN
 	}
 }
 void Connection::forceClose()
@@ -69,7 +69,7 @@ void Connection::forceClose()
 	{
 		setState(StateE::kDisconnecting);
 		//handleClose();
-		//Ê¹ï¿½ï¿½queueInLoopï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½EventLoop::doPendingFunctors()ï¿½ï¿½Ö´ï¿½ï¿½forceCloseInLoop()ï¿½ï¿½ï¿½ï¿½ÒªÊ¹ï¿½ï¿½shared_from_this()
+		//Ê¹ÓÃqueueInLoopº¯Êý£¬¾ÍÒ»¶¨ÊÇ·ÅÔÚÈÎÎñ¶ÓÁÐÖÐ£¬¼´ÊÇÔÚEventLoop::doPendingFunctors()ÖÐÖ´ÐÐforceCloseInLoop()£¬ÐèÒªÊ¹ÓÃshared_from_this()
 		loop_->queueInLoop([this]() { shared_from_this()->forceCloseInLoop(); });
 	}
 }
@@ -89,21 +89,21 @@ void Connection::connectEstablished()
 	setState(StateE::kConnected);
 	channel_->tie(shared_from_this());
 	channel_->enableReading();
-	connectionCallback_(shared_from_this());	//ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½Ó³É¹ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½Ä»Øµï¿½ï¿½ï¿½ï¿½ï¿½
+	connectionCallback_(shared_from_this());	//µ÷ÓÃÓÃ»§ÉèÖÃµÄÁ¬½Ó³É¹¦»ò¶Ï¿ªµÄ»Øµ÷º¯Êý
 }
 
-// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½Ø±ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½)
+// Á¬½ÓÏú»Ù(¹Ø±ÕÁ¬½ÓµÄ×îºóÒ»²½)
 void Connection::connectDestroyed()
 {
-	if (state_ == StateE::kConnected) {	//Ò»ï¿½ã²»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½if
+	if (state_ == StateE::kConnected) {	//Ò»°ã²»»á½øÈëÕâ¸öif
 		setState(StateE::kDisconnected);
 		channel_->disableAll();
 
-		connectionCallback_(shared_from_this());//ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½Ó³É¹ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½Ä»Øµï¿½ï¿½ï¿½ï¿½ï¿½
+		connectionCallback_(shared_from_this());//µ÷ÓÃÓÃ»§ÉèÖÃµÄÁ¬½Ó³É¹¦»ò¶Ï¿ªµÄ»Øµ÷º¯Êý
 	}
 	
 	channel_->remove();
-	//Conntionï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð²Å»ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½TcpConnectionï¿½ï¿½ï¿½ï¿½)
+	//ConntionµÄÉúÃüÖÜÆÚÔÚÕâ¸öº¯ÊýÖÐ²Å»á½áÊø(Èç¹ûÓÃ»§²»³ÖÓÐTcpConnection¶ÔÏó)
 }
 
 
@@ -112,11 +112,11 @@ void Connection::handleRead()
 	int savedErrno = 0;
 	auto n = inputBuffer_.readFd(fd(), &savedErrno);
 	if (n > 0) {
-		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ÃºÃµÄºï¿½ï¿½ï¿½
+		//Õâ¸öÊÇÓÃ»§ÉèÖÃºÃµÄº¯Êý
 		messageCallback_(shared_from_this(), &inputBuffer_);
 	}
 	else if (n == 0) {
-		//ï¿½ï¿½Ê¾ï¿½Í»ï¿½ï¿½Ë¹Ø±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		//±íÊ¾¿Í»§¶Ë¹Ø±ÕÁËÁ¬½Ó
 		handleClose();
 	}
 	else {
@@ -132,9 +132,9 @@ void Connection::handleWrite()
 
 	auto n = ::write(fd(), outputBuffer_.peek(), outputBuffer_.readableBytes());
 	if (n > 0) {
-		//ï¿½ï¿½ï¿½ï¿½readerIndex
+		//¸üÐÂreaderIndex
 		outputBuffer_.retrieve(n);
-		if (outputBuffer_.readableBytes() == 0) {//ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï£ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½Ð´ï¿½Â¼ï¿½
+		if (outputBuffer_.readableBytes() == 0) {//±íÃ÷Òª·¢ËÍµÄÊý¾ÝÒÑÈ«²¿·¢ËÍÍê±Ï£¬ËùÒÔÈ¡ÏûÐ´ÊÂ¼þ
 			channel_->disableWriting();
 
 		/*	if (state_ == StateE::kDisconnecting) {
@@ -156,9 +156,9 @@ void Connection::handleClose()
 	channel_->disableAll();
 
 	ConnectionPtr guardThis(shared_from_this());
-	connectionCallback_(guardThis);		//ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½connectionCallback_ï¿½ï¿½ï¿½ï¿½
+	connectionCallback_(guardThis);		//µ÷ÓÃÓÃ»§¶¨ÒåµÄconnectionCallback_º¯Êý
 
-	closeCallback_(guardThis);	//closeCallback_ï¿½ï¿½ï¿½ï¿½Server::removeConnection()ï¿½ï¿½ï¿½ï¿½
+	closeCallback_(guardThis);	//closeCallback_¾ÍÊÇServer::removeConnection()º¯Êý
 }
 
 void Connection::handleError()
@@ -177,13 +177,13 @@ void Connection::sendInLoop(const char* message, size_t len)
 	bool faultError = false;
 	ssize_t nwrote = 0;
 	size_t reamining = len;
-	//ï¿½ï¿½ï¿½ï¿½ï¿½Ç°channelÃ»ï¿½ï¿½Ð´ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò·ï¿½ï¿½Í»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ´ï¿½ï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½Ç¾Í¿ï¿½ï¿½ï¿½Ö±ï¿½Ó·ï¿½ï¿½ï¿½
+	//Èç¹ûµ±Ç°channelÃ»ÓÐÐ´ÊÂ¼þ·¢Éú£¬²¢ÇÒ·¢ËÍ»º³åÇøÎÞ´ý·¢ËÍµÄÊý¾Ý£¬ÄÇ¾Í¿ÉÒÔÖ±½Ó·¢ËÍ
 	if (!channel_->isWrite() && outputBuffer_.readableBytes() == 0) {
 		nwrote = ::write(fd(), message, len);
 		if (nwrote >= 0) {
 			reamining = len - nwrote;
 			if (reamining == 0) {
-				//ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½Í³ï¿½È¥ï¿½ï¿½Í¨Öªï¿½Ã»ï¿½Ð´ï¿½ï¿½ï¿½ï¿½ï¿½
+				//±íÊ¾Êý¾ÝÒÑÍêÈ«·¢ËÍ³öÈ¥£¬Í¨ÖªÓÃ»§Ð´ÒÑÍê³É
 				if (writeCompleteCallback_) {
 					writeCompleteCallback_(shared_from_this());
 				}

@@ -17,3 +17,4 @@ using TimerCallback = std::function<void()>;
 // the data has been read to (buf, len)
 using MessageCallback = std::function<void(const ConnectionPtr&,
 	Buffer*)> ;
+

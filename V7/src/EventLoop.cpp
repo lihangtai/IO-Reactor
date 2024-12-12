@@ -1,14 +1,19 @@
-#include "EventLoop.h"
-#include "Channel.h"
-#include "Epoll.h"
-#include <signal>
+#include"EventLoop.h"
+#include"Channel.h"
+#include"Epoll.h"
+#include"timerqueue.h"
+#include<signal.h>
+#include"../src/log/logger.h"
 
-int createEventfd(){
-    int eventfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-    if(eventfd < 0){
-        perror("eventfd");
-    }
-    return eventfd;
+// ´´½¨wakeupfd£¬ÓÃÀ´notify»½ĞÑ´¦Àí»Øµ÷ÈÎÎñ²Ù×÷
+int createEventfd()
+{
+	int evtfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+	if (evtfd < 0)
+	{
+		LOG_ERROR << "eventfd error: " << errno;
+	}
+	return evtfd;
 }
 
 class IgnoreSigPipe
@@ -23,17 +28,20 @@ public:
 IgnoreSigPipe initObj;
 
 EventLoop::EventLoop()
-    : threadId_(std::this_thread::get_id()),
-    , quit(false)
-    , callingPendingFunctors_(false)
-    , ep_(std::make_unique<Epoll>())
-    , WakeupFd_(createEventfd())
-    , wakeupChannel_(std::make_unique<Channel>(WakeupFd_))
-    , currentActiveChannel_(nullptr)
+	:threadId_(std::this_thread::get_id())
+	,quit_(false)
+	, callingPendingFunctors_(false)
+	,ep_(std::make_unique<Epoll>())
+	,wakeupFd_(createEventfd())
+	,wakeupChannel_(std::make_unique<Channel>(this,wakeupFd_))
+	,timer_queue_(std::make_unique<TimerQueue>(this))
 {
-    wakeupChannel_->setReadCallback(std::bind(&EventLoop::handleRead, this));
-    wakeupChannel_->enableReading();
+	// ÉèÖÃwakeupfdµÄ·¢ÉúÊÂ¼şºóµÄ»Øµ÷²Ù×÷
+	wakeupChannel_->SetReadCallback([this]() {handleRead(); });
+	//¼àÌıwakeupchannel_µÄEPOLLIN¶ÁÊÂ¼şÁË
+	wakeupChannel_->enableReading();
 }
+
 EventLoop::~EventLoop()
 {
 	wakeupChannel_->disableAll();
@@ -51,11 +59,10 @@ void EventLoop::loop()
 			active->handleEvent();
 		}
 
-		//æ‰§è¡Œå½“å‰EventLoopäº‹ä»¶å¾ªç¯éœ€è¦å¤„ç†çš„å›è°ƒä»»åŠ¡æ“ä½œ
+		//Ö´ĞĞµ±Ç°EventLoopÊÂ¼şÑ­»·ĞèÒª´¦ÀíµÄ»Øµ÷ÈÎÎñ²Ù×÷
 		doPendingFunctors();	
 	}
 }
-
 void EventLoop::updateChannel(Channel* channel)
 {
 	ep_->updateChannel(channel);
@@ -66,11 +73,14 @@ void EventLoop::removeChannel(Channel* channel)
 	ep_->del(channel);
 }
 
+void EventLoop::quit() {
+	quit_ = true;
+}
 void EventLoop::assertInLoopThread()
 {
 	if (!isInLoopThread()) {
 		LOG_ERROR << "not in this loopThread";
-		//ä¼šå‡ºé”™ï¼Œç°åœ¨è¿˜æ²¡æœ‰å¤„ç†
+		//»á³ö´í£¬ÏÖÔÚ»¹Ã»ÓĞ´¦Àí
 	}
 }
 
@@ -96,10 +106,12 @@ void EventLoop::queueInLoop(Functor cb)
 	}
 }
 
+
+// ÓÃÀ´»½ĞÑloopËùÔÚÏß³Ì  Ïòwakeupfd_Ğ´Ò»¸öÊı¾İ£¬wakeupChannel¾Í·¢Éú¶ÁÊÂ¼ş£¬µ±Ç°loopÏß³Ì¾Í»á±»»½ĞÑ
 void EventLoop::wakeup()
 {
 	uint64_t one = 1;
-	ssize_t n = ::write(wakeupFd_, &one, sizeof(one));
+	ssize_t n = write(wakeupFd_, &one, sizeof(one));
 	if (n != sizeof(one)){
 		LOG_DEBUG<< "EventLoop wakeup write "<< n <<" bytes instead of 8";
 	}
@@ -114,34 +126,37 @@ void EventLoop::handleRead()
 	}
 }
 
+//Ö´ĞĞÈÎÎñ»Øµ÷º¯Êı
 void EventLoop::doPendingFunctors()	
 {
 	std::vector<Functor> functors;
 	callingPendingFunctors_ = true;
-	// æŠŠfunctorsè½¬ç§»åˆ°å±€éƒ¨çš„functorsï¼Œè¿™æ ·åœ¨æ‰§è¡Œå›è°ƒæ—¶ä¸ç”¨åŠ é”ã€‚ä¸å½±å“mainloopæ³¨å†Œå›è°ƒ
+	// °Ñfunctors×ªÒÆµ½¾Ö²¿µÄfunctors£¬ÕâÑùÔÚÖ´ĞĞ»Øµ÷Ê±²»ÓÃ¼ÓËø¡£²»Ó°Ïìmainloop×¢²á»Øµ÷
 	{
 		std::lock_guard<std::mutex> lock(mutex_);
 		functors.swap(pendingFunctors_);
 	}
 
 	for (const auto& functor : functors) {
-		functor();	//æ‰§è¡Œå½“å‰loopéœ€è¦æ‰§è¡Œçš„å›è°ƒæ“ä½œ
+		functor();	//Ö´ĞĞµ±Ç°loopĞèÒªÖ´ĞĞµÄ»Øµ÷²Ù×÷
 	}
 
 	callingPendingFunctors_ = false;
 }
-//åœ¨ç»™å®šçš„æ—¶é—´æ‰§è¡Œå®šæ—¶å™¨
+
+
+//ÔÚ¸ø¶¨µÄÊ±¼äÖ´ĞĞ¶¨Ê±Æ÷
 int64_t EventLoop::runAt(Timestamp time, TimerCallback cb)
 {
 	return timer_queue_->addTimer(std::move(cb), time, 0.0);
 }
-//åœ¨ç»™å®šçš„æ—¶é—´é—´éš”åæ‰§è¡Œå®šæ—¶å™¨
+//ÔÚ¸ø¶¨µÄÊ±¼ä¼ä¸ôºóÖ´ĞĞ¶¨Ê±Æ÷
 int64_t EventLoop::runAfter(double delay_seconds, TimerCallback cb)
 {
 	Timestamp time(addTime(Timestamp::now(), delay_seconds));
 	return runAt(time, std::move(cb));
 }
-//æ¯ä¸ªä¸€ä¸ªæ—¶é—´é—´éš”å°±æ‰§è¡Œä¸€æ¬¡å®šæ—¶å™¨
+//Ã¿¸öÒ»¸öÊ±¼ä¼ä¸ô¾ÍÖ´ĞĞÒ»´Î¶¨Ê±Æ÷
 int64_t EventLoop::runEvery(double interval_seconds, TimerCallback cb)
 {
 	Timestamp time(addTime(Timestamp::now(), interval_seconds));
@@ -152,3 +167,4 @@ void EventLoop::cancel(int64_t timerId)
 {
 	return timer_queue_->cancel(timerId);
 }
+

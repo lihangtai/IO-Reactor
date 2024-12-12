@@ -1,27 +1,18 @@
 #pragma once
-#include "InetAddr.h"
 
+class InetAddr;
 
 class Socket
 {
-
 public:
-    Socket();
-    Socket(int fd);
-    ~Socket();
-
-    void bind(const InetAddr &server_addr);
-
-    void listen();
-
-    int accept(InetAddr* addr);
-    
-    void setNonblock();
-
-    int fd()const{return fd_;}
-
+	Socket();
+	Socket(int fd);
+	~Socket();
+	void bind(const InetAddr& serv_addr);
+	int accept(InetAddr* addr);
+	void listen();
+	void setNonblock();
+	int fd() { return sockfd_; }
 private:
-
-    int fd_;
-   
+	int sockfd_;
 };

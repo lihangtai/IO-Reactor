@@ -28,13 +28,13 @@ public:
 	void setCloseCallback(EventCallback cb) { closeCallback_ = std::move(cb); }
 	void setErrorCallback(EventCallback cb){ errorCallback_ = std::move(cb); }
 
-	void enableReading() { events_ |= (EPOLLIN | EPOLLPRI); update(); }	//×¢ï¿½ï¿½É¶ï¿½ï¿½Â¼ï¿½
-	void disableReading() { events_ &= ~(EPOLLIN | EPOLLPRI); update(); }	//×¢ï¿½ï¿½ï¿½É¶ï¿½ï¿½Â¼ï¿½
-	void enableWriting() { events_ |= EPOLLOUT; update(); }			//×¢ï¿½ï¿½ï¿½Ð´ï¿½Â¼ï¿½
-	void disableWriting() { events_ &= ~EPOLLOUT; update(); }		//×¢ï¿½ï¿½ï¿½ï¿½Ð´ï¿½Â¼ï¿½
-	void disableAll() {events_ = 0; update();}	//×¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â¼ï¿½
+	void enableReading() { events_ |= (EPOLLIN | EPOLLPRI); update(); }	//×¢²á¿É¶ÁÊÂ¼þ
+	void disableReading() { events_ &= ~(EPOLLIN | EPOLLPRI); update(); }	//×¢Ïú¿É¶ÁÊÂ¼þ
+	void enableWriting() { events_ |= EPOLLOUT; update(); }			//×¢²á¿ÉÐ´ÊÂ¼þ
+	void disableWriting() { events_ &= ~EPOLLOUT; update(); }		//×¢Ïú¿ÉÐ´ÊÂ¼þ
+	void disableAll() {events_ = 0; update();}	//×¢ÏúËùÓÐÊÂ¼þ
 
-	//ï¿½ï¿½ï¿½ï¿½fdï¿½ï¿½Ç°ï¿½ï¿½ï¿½Â¼ï¿½×´Ì¬
+	//·µ»Øfdµ±Ç°µÄÊÂ¼þ×´Ì¬
 	bool isNoneEvent()const { return events_ == 0; }
 	bool isWrite()const {return events_ & EPOLLOUT; }
 	bool isRead()const {return events_& (EPOLLIN | EPOLLPRI); }
@@ -51,7 +51,7 @@ private:
 	void update();
 	void handleEventWithGuard();
 
-	static std::string eventsToString(int fd, int ev);	//ï¿½ï¿½Òªï¿½ï¿½static,ï¿½ï¿½Îªï¿½Ç¸ï¿½reventsToString() constÊ¹ï¿½ï¿½
+	static std::string eventsToString(int fd, int ev);	//ÐèÒª¼Óstatic,ÒòÎªÊÇ¸øreventsToString() constÊ¹ÓÃ
 
 private:
 	EventLoop* loop_;

@@ -1,16 +1,15 @@
-#include "Acceptor.h"
-#include "EventLoop.h"
-
-
-Acceptor::Acceptor(EventLoop* loop, const InetAddress& listenAddr, bool reuseport)
-    : loop_(loop)
-    , acceptSocket_(Socket())
-    , acceptChannel_(loop_, acceptSocket_.fd())
-    , listen(false)
-{   
-    sockets::setReuseAddr(acceptSocket_.fd(), true);
-    acceptSocket_.bind(listenAddr);
-    acceptChannel_.SetReadCallback([this]() {handleRead(); });
+#include"Acceptor.h"
+#include"./util/util.h"
+#include"../src/log/logger.h"
+Acceptor::Acceptor(const InetAddr& listenAddr, EventLoop* eventloop)
+	:loop_(eventloop)
+	,acceptSocket_(Socket())
+	,acceptChannel_(loop_,acceptSocket_.fd())
+	,listen_(false)
+{
+	sockets::setReuseAddr(acceptSocket_.fd());
+	acceptSocket_.bind(listenAddr);
+	acceptChannel_.SetReadCallback([this]() {handleRead(); });
 }
 
 Acceptor::~Acceptor()
@@ -18,7 +17,6 @@ Acceptor::~Acceptor()
 	acceptChannel_.disableAll();
 	acceptChannel_.remove();
 }
-
 void Acceptor::listen()
 {
 	acceptSocket_.listen();

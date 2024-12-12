@@ -1,25 +1,23 @@
 #pragma once
+#include<thread>
+#include<mutex>
+#include<condition_variable>
 
-#include "EventLoop.h"
-#include <mutex>
-#include <thread>
-#include <condition_variable>
-
+class EventLoop;
 class EventLoopThread
 {
 public:
+	EventLoopThread();
+	~EventLoopThread();
 
-    EventLoopThread();
-    ~EventLoopThread();
-    EventLoop* startLoop();
+	EventLoop* startLoop();
 
 private:
-    EventLoop *_loop;
-    std::mutex mtx_;
-    std::conditon_variable cond_;
-    std::thread thread_;
+	void threadFunc();
 
-    void threadFunc();
+	EventLoop* loop_;
 
-
+	std::thread thread_;
+	std::mutex mutex_;
+	std::condition_variable cond_;
 };

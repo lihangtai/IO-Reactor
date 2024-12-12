@@ -29,12 +29,12 @@ public:
 	bool isInLoopThread()const { return threadId_ == std::this_thread::get_id(); }
 	void runInLoop(Functor cb);
 	void queueInLoop(Functor cb);
-		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½loopï¿½ï¿½ï¿½ï¿½ï¿½ß³ï¿½  ï¿½ï¿½wakeupfd_Ð´Ò»ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½wakeupChannelï¿½Í·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½Ç°loopï¿½ß³Ì¾Í»á±»ï¿½ï¿½ï¿½ï¿½
+		// ÓÃÀ´»½ÐÑloopËùÔÚÏß³Ì  Ïòwakeupfd_Ð´Ò»¸öÊý¾Ý£¬wakeupChannel¾Í·¢Éú¶ÁÊÂ¼þ£¬µ±Ç°loopÏß³Ì¾Í»á±»»½ÐÑ
 	void wakeup();
 
 	std::thread::id getThreadId(){ return threadId_; }
 
-	void quit();	//ï¿½Ë³ï¿½ï¿½Â¼ï¿½Ñ­ï¿½ï¿½
+	void quit();	//ÍË³öÊÂ¼þÑ­»·
 
 	void assertInLoopThread();
 
@@ -44,22 +44,22 @@ public:
 	void cancel(int64_t timerId);
 
 private:
-	void doPendingFunctors();	//Ö´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½
-	void handleRead();	//ï¿½ï¿½ï¿½ï¿½wake up
+	void doPendingFunctors();	//Ö´ÐÐÈÎÎñ»Øµ÷º¯Êý
+	void handleRead();	//ÓÃÓÚwake up
 
 
 
 	std::thread::id threadId_;
-	std::atomic_bool quit_;	//ï¿½ï¿½Ö¾ï¿½Ë³ï¿½loopÑ­ï¿½ï¿½
+	std::atomic_bool quit_;	//±êÖ¾ÍË³öloopÑ­»·
 
-	std::atomic_bool callingPendingFunctors_;   //ï¿½ï¿½Ê¶ï¿½ï¿½Ç°loopï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ÒªÖ´ï¿½ÐµÄ»Øµï¿½ï¿½ï¿½ï¿½ï¿½
+	std::atomic_bool callingPendingFunctors_;   //±êÊ¶µ±Ç°loopÊÇ·ñÓÐÐèÒªÖ´ÐÐµÄ»Øµ÷²Ù×÷
 
 	std::unique_ptr<Epoll> ep_;
-	channelList activeChannels_;	//ï¿½ï¿½ï¿½æµ±Ç°ï¿½ï¿½Ô¾ï¿½Â¼ï¿½ï¿½ï¿½Channelï¿½Ð±ï¿½
+	channelList activeChannels_;	//±£´æµ±Ç°»îÔ¾ÊÂ¼þµÄChannelÁÐ±í
 
 	int wakeupFd_;
 	std::unique_ptr<Channel> wakeupChannel_;
 	std::unique_ptr<TimerQueue> timer_queue_;
-	std::vector<Functor> pendingFunctors_;  //ï¿½æ´¢loopï¿½ï¿½ÒªÖ´ï¿½Ðµï¿½ï¿½ï¿½ï¿½Ð»Øµï¿½ï¿½ï¿½ï¿½ï¿½
-	std::mutex mutex_;  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½vectorï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß³Ì°ï¿½È«ï¿½ï¿½ï¿½ï¿½
+	std::vector<Functor> pendingFunctors_;  //´æ´¢loopÐèÒªÖ´ÐÐµÄËùÓÐ»Øµ÷²Ù×÷
+	std::mutex mutex_;  // »¥³âËø£¬ÓÃÀ´±£»¤ÉÏÃævectorÈÝÆ÷µÄÏß³Ì°²È«²Ù×÷
 };

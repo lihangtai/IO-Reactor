@@ -10,13 +10,13 @@ ssize_t Buffer::readFd(int fd, int* saveErrno)
 
 	auto writable = writeableBytes();
 
-	vec[0].iov_base = begin() + writerIndex_;	//ï¿½ï¿½Ò»ï¿½é»ºï¿½ï¿½ï¿½ï¿½
-	vec[0].iov_len = writable;	//iov_baseï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½Ä¿Õ¼ï¿½ï¿½Ð¡
+	vec[0].iov_base = begin() + writerIndex_;	//µÚÒ»¿é»º³åÇø
+	vec[0].iov_len = writable;	//iov_base»º³åÇø¿ÉÐ´µÄ¿Õ¼ä´óÐ¡
 
-	vec[1].iov_base = extrabuffer;	//ï¿½Ú¶ï¿½ï¿½ì»ºï¿½ï¿½ï¿½ï¿½
+	vec[1].iov_base = extrabuffer;	//µÚ¶þ¿ì»º³åÇø
 	vec[1].iov_len = sizeof(extrabuffer);
 
-	//ï¿½ï¿½Bufferï¿½ï¿½65535ï¿½Ö½ÚµÄ¿Õ¼ï¿½Õ¼ä£¬ï¿½Í²ï¿½ï¿½ï¿½ï¿½ï¿½Õ»ï¿½ÏµÄ»ï¿½ï¿½ï¿½ï¿½ï¿½
+	//ÈôBufferÓÐ65535×Ö½ÚµÄ¿Õ¼ä¿Õ¼ä£¬¾Í²»ÊÊÓÃÕ»ÉÏµÄ»º³åÇø
 	auto iovcnt = (writable < sizeof(extrabuffer)) ? 2 : 1;
 	auto n = ::readv(fd, vec, iovcnt);
 	if (n < 0) {
@@ -26,8 +26,8 @@ ssize_t Buffer::readFd(int fd, int* saveErrno)
 		writerIndex_ += n;
 	}
 	else {
-		//Bufferï¿½×²ï¿½Ä¿ï¿½Ð´ï¿½Õ¼ä²»ï¿½ï¿½ï¿½ï¿½ï¿½nï¿½Ö½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½
-		writerIndex_ = buffer_.size();	//ï¿½ï¿½ï¿½ï¿½writerIndex_ÎªÄ©Î²ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½append
+		//Bufferµ×²ãµÄ¿ÉÐ´¿Õ¼ä²»¹»´æ·Ån×Ö½ÚÊý¾Ý£¬
+		writerIndex_ = buffer_.size();	//¸üÐÂwriterIndex_ÎªÄ©Î²£¬ÔÙÊ¹ÓÃappend
 		append(extrabuffer, n - writable);
 	}
 
@@ -41,4 +41,5 @@ ssize_t Buffer::writeFd(int fd, int* saveErrno)
 	}
 	return n;
 }
+
 

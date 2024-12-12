@@ -2,20 +2,51 @@
 
 ## 定时器功能
 
+需要的elements：时间timestamp（对真实时间的量化）， 定时器timer（间隔时间超时回调函数，是否重复），定时器容器（用一个fd高效增减管理多个timer） 
+
+
+### 对于时间戳使用的是：std::chrono::steady_clock (操作系统时间)
+```
+std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()).time_since_epoch().count();
+```
+
+
+### 对于定时器
+不能让定时器阻塞Reactor的执行, 触发后调用fd对应的回调函数
+
 1. 定时函数的选择：有的函数基于信号，有的会阻塞整个线程，为了让整个功能能够保持响应
 使用timefd_ 因为把时间当作了一个文件描述符，超时的一瞬间文件变得可读，可以更好的match epoll
 
-sleep / alarm / usleep：在实现时有可能用了信号 SIGALRM，在多线程程序中处理信号是个相当麻烦的事情，应当尽量避免。
-
-nanosleep 和 clock_nanosleep： 是线程安全的，但是在非阻塞网络编程中，绝对不能用让线程挂起的方式来等待一段时间，程序会失去响应。正确的做法是注册一个时间回调函数。
-
-getitimer 和 timer_create：也是用信号来 deliver 超时，在多线程程序中也会有麻烦。timer_create 可以指定信号的接收方是进程还是线程，算是一个进步，不过在信号处理函数(signal handler)能做的事情实在很受限。
-
 timerfd_create ：把时间变成了一个文件描述符，该“文件”在定时器超时的那一刻变得可读，这样就能很方便地融入到 select/poll 框架中，用统一的方式来处理 IO 事件和超时事件，这也正是 Reactor 模式的长处。
 
+timerfd_settime ：设置定时器，设置定时器超时后触发的回调函数，设置定时器是否重复触发. 相对于当前时间或者指定绝对时间，可以设置重复
+
+> timerfd_create 创建的文件描述符是用于管理单个定时器的，最后一次调用的设置会覆盖之前的设置
+定时器触发 epoll_wait之后需要read这个文件描述符，否则持续会持续发送EPOLLIN
+
+
+### timer容器
+
+***重点是容器的数据结构选择***
+容器里存放的是timer是：确定的时间点（不是时间间隔），是否需要重复触发，以及对应的EPOLLIN回调函数
+
+
+总结-》该高效的增删管理的timer容器对象的设计思想是：1.使用了timerfd 加入到了epoll的循环处理中，并且由于timerfd_setter每次只能执行一个定时器功能，该类维护了时间容器，每次定时器expire都会进行比较选出最近的时间作为下一个定时器开启 
+2.使用三个容器维护了功能：timer容器，active_timer容器（高效查），和unactive_timer容器
+3. 每个容器里的对象在注册的时候就声明了EPOLLIN触发的时候会执行的函数逻辑
+
+使用非常方便:直接声明时间+需要执行的逻辑
+``` 
+	loop.runAfter(1, []() {myprint("once1"); });
+	loop.runAfter(1.5, []() {myprint("once1.5"); });
+	loop.runAfter(2.5, []() {myprint("once2.5"); });
+	loop.runAfter(4.8, []() {myprint("once4.8"); });
+	loop.runEvery(2, []() {myprint("every2"); }); 
+```
 
 ## 异步LOG系统 
-设计与实现：实现一个线程安全，LOG功能不影响功能逻辑。
+
+设计与实现：实现一个线程安全，不能让LOG阻塞Reactor的执行
 前台（应用）：像使用stdout一样轻松地打印日志
 后台线程负责在日志信息积累到一定量/到达时间间隔，持久化到磁盘
 > stdout 并不是线程安全的
@@ -56,3 +87,9 @@ LOG就是一直持续创建和析构， 但在第一次析构的时候创建了�
 多次调用宏创建LOG类对象  -》 操作符重载(<<)持续将数据写入到FIXBUFFER缓存中 -》 LOG对象析构造ing -》 （用std::once_flag + std::call_once限制只创建1次）创建异步IO类对象asynclogger  -》 start成员函数开启后端文件IO线程 (死循环，按照预设条件做持久化)   -》 LOG将FIXBUFFER缓冲写入到asynclogger  -》 满足条件触发后端IO线程的flush函数，将asynclogger中的数据持久化到磁盘 （此处使用双缓冲技术） -》 程序结束
 
 ![](https://i-blog.csdnimg.cn/blog_migrate/307e9c2a9f9915dfb31d17fabb540ee5.png)
+
+
+使用非常方便:第一次使用宏创建对象的时候就会初始化异步IO对象（静态变量），后面使用宏，对象在析构的时候都会把数据写入到异步IO对象中，当满足条件时，异步IO对象会触发后端IO线程的flush函数，将数据持久化到磁盘
+```
+LOG_INFO << "1111woshisdfsd " << 23 << 34 << "buox";
+```

@@ -54,7 +54,7 @@ void Channel::handleEvent()
 			handleEventWithGuard();
 		}
 	}
-	else {//锟斤拷锟絜lse锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟接的ｏ拷锟斤拷为锟斤拷始锟斤拷锟斤拷锟斤拷锟接碉拷时锟斤拷tied_锟斤拷false,锟斤拷锟斤拷锟接斤拷锟斤拷锟斤拷始通锟斤拷tied_锟斤拷为true
+	else {//这个else里面是用来建立连接的，因为开始建立连接的时候tied_是false,是连接建立后开始通信tied_才为true
 		handleEventWithGuard();
 	}
 }
@@ -80,7 +80,7 @@ void Channel::handleEventWithGuard()
 	//LOG_TRACE << reventsToString();
 	LOG_INFO << reventsToString();
 
-	//锟斤拷锟铰硷拷为锟斤拷锟斤拷没锟叫可讹拷锟铰硷拷时
+	//当事件为挂起并没有可读事件时
 	if ((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN)) {
 		if (closeCallback_) {
 			LOG_DEBUG << "channel closeCallback";
@@ -91,11 +91,11 @@ void Channel::handleEventWithGuard()
 		if (errorCallback_)
 			errorCallback_();
 	}
-	if (revents_ & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)) { //锟斤拷锟节讹拷锟斤拷锟铰硷拷 
+	if (revents_ & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)) { //关于读的事件 
 		if (readCallback_)
 			readCallback_();
 	}
-	if (revents_ & EPOLLOUT) {   //锟斤拷锟斤拷写锟斤拷锟铰硷拷
+	if (revents_ & EPOLLOUT) {   //关于写的事件
 		if (writeCallback_)
 			writeCallback_();
 	}
